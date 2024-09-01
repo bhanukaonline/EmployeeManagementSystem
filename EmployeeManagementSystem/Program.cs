@@ -1,7 +1,40 @@
+using AttendanceAdmin.Context;
+using EmployeeManagementSystem.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+builder.Services.AddSingleton<DapperDbContext>();
+
+// Add Authentication services
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+    });
+
+// Add Authorization services
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("ManagerOnly", policy => policy.RequireRole("Manager"));
+    options.AddPolicy("EmployeeOnly", policy => policy.RequireRole("Employee"));
+});
+
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AuthorizeFolder("/Secure"); // Secure folder requires authentication
+});
+
+
+// Register custom services
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
@@ -18,7 +51,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
 
 app.MapRazorPages();
 

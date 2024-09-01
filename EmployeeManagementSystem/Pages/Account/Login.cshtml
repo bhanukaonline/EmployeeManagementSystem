@@ -1,0 +1,34 @@
+﻿@page
+@model EmployeeManagementSystem.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<h2>Login</h2>
+
+<form method="post">
+    <div class="form-group">
+        <label asp-for="Input.Username"></label>
+        <input asp-for="Input.Username" class="form-control" />
+        <span asp-validation-for="Input.Username" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Input.Password"></label>
+        <input asp-for="Input.Password" type="password" class="form-control" />
+        <span asp-validation-for="Input.Password" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <input asp-for="Input.RememberMe" />
+        <label asp-for="Input.RememberMe"></label>
+    </div>
+    <button type="submit" class="btn btn-primary">Login</button>
+</form>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="text-danger">@Model.ErrorMessage</div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

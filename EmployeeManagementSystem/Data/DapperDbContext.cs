@@ -3,15 +3,15 @@ using System.Data;
 
 namespace AttendanceAdmin.Context
 {
-    public class DapperContext
+    public class DapperDbContext
     {
         private readonly IConfiguration _configuration;
         private readonly string _connectionString;
 
-        public DapperContext(IConfiguration configuration)
+        public DapperDbContext(IConfiguration configuration)
         {
             _configuration = configuration;
-            _connectionString = _configuration.GetConnectionString("Default");
+            _connectionString = _configuration.GetConnectionString("DefaultConnection");
         }
 
         public IDbConnection CreateConnection()
