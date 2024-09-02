@@ -73,8 +73,19 @@ namespace EmployeeManagementSystem.Pages.Account
                 new ClaimsPrincipal(claimsIdentity),
                 authProperties);
 
-            // Redirect to home page or secure page
-            return RedirectToPage("/Index");
+            // Redirect to different pages based on the user's role
+            if (user.Role == "Admin")
+            {
+                return RedirectToPage("/Admin/Dashboard");
+            }
+            else if (user.Role == "Manager")
+            {
+                return RedirectToPage("/Manager/ManageDepartment");
+            }
+            else
+            {
+                return RedirectToPage("/Index");
+            }
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using EmployeeManagementSystem.Class;
-using EmployeeManagementSystem.Models;
+﻿using EmployeeManagementSystem.Models;
 using System.Threading.Tasks;
 
 namespace EmployeeManagementSystem.Services

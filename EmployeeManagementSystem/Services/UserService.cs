@@ -1,8 +1,6 @@
 ﻿using AttendanceAdmin.Context;
 using BCrypt.Net;
 using Dapper;
-using EmployeeManagementSystem.Class;
-//using EmployeeManagementSystem.Data;
 using EmployeeManagementSystem.Models;
 using System.Threading.Tasks;
 

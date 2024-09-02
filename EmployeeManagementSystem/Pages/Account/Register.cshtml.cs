@@ -1,4 +1,3 @@
-using EmployeeManagementSystem.Class;
 using EmployeeManagementSystem.Models;
 using EmployeeManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
