@@ -31,7 +31,7 @@ namespace EmployeeManagementSystem.Services
             user.PasswordHash = passwordHash;
 
             // Insert the user into the database
-            var sqlInsert = "INSERT INTO Users (Username, PasswordHash, Role) VALUES (@Username, @PasswordHash, @Role)";
+            var sqlInsert = "INSERT INTO Users (Username, PasswordHash, Role , Address, Phone , Email, Age, Position, Salary, DepartmentId) VALUES (@Username, @PasswordHash, @Role ,@Address, @Phone , @Email, @Age, @Position, @Salary, @DepartmentId)";
             var result = await connection.ExecuteAsync(sqlInsert, user);
             return result > 0;
         }
@@ -49,6 +49,18 @@ namespace EmployeeManagementSystem.Services
                 return null;
 
             return user;
+        }
+        public async Task<IEnumerable<User>> GetAllUsersAsync()
+        {
+            var sql = "SELECT * FROM Users";
+            using var connection = _dbContext.CreateConnection();
+            return await connection.QueryAsync<User>(sql);
+        }
+        public async Task<User> GetUserByIdAsync(int userId)
+        {
+            var sql = "SELECT * FROM Users WHERE Id = @UserId";
+            using var connection = _dbContext.CreateConnection();
+            return await connection.QueryFirstOrDefaultAsync<User>(sql, new { UserId = userId });
         }
     }
 }

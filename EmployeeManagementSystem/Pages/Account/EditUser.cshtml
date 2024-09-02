@@ -1,15 +1,12 @@
 ﻿@page
-@model EmployeeManagementSystem.Pages.Account.RegisterModel
+@model EmployeeManagementSystem.Pages.Account.EditUserModel
 @{
-    ViewData["Title"] = "Register";
 }
-
-<h2>Register</h2>
-
+<h2>Edit User</h2>
 <form method="post">
     <div class="form-group">
         <label asp-for="Input.Username"></label>
-        <input asp-for="Input.Username" class="form-control" />
+        <input asp-for="Input.Username" class="form-control" value="@Model.User.Username" />
         <span asp-validation-for="Input.Username" class="text-danger"></span>
     </div>
     <div class="form-group">
@@ -25,57 +22,66 @@
     <div class="form-group">
         <label asp-for="Input.Role"></label>
         <select asp-for="Input.Role" class="form-control">
-            <option value="">Select Role</option>
-            <option value="Employee">Employee</option>
-            <option value="Manager">Manager</option>
-            <option value="Admin">Admin</option>
-        </select>
+    <option value="">Select Role</option>
+            <option value="Employee" selected="@(Model.User.Role == "Employee")">Employee</option>
+            <option value="Manager" selected="@(Model.User.Role == "Manager")">Manager</option>
+            <option value="Admin" selected="@(Model.User.Role == "Admin")">Admin</option>
+            
+</select>
         <span asp-validation-for="Input.Role" class="text-danger"></span>
     </div>
     <div class="form-group">
         <label asp-for="Input.Address"></label>
-        <input asp-for="Input.Address" class="form-control" />
+        <input asp-for="Input.Address" class="form-control" value="@Model.User.Address" />
         <span asp-validation-for="Input.Address" class="text-danger"></span>
     </div>
     <div class="form-group">
         <label asp-for="Input.Phone"></label>
-        <input asp-for="Input.Phone" class="form-control" />
+        <input asp-for="Input.Phone" class="form-control" value="@Model.User.Phone" />
         <span asp-validation-for="Input.Phone" class="text-danger"></span>
     </div>
     <div class="form-group">
         <label asp-for="Input.Email"></label>
-        <input asp-for="Input.Email" class="form-control" />
+        <input asp-for="Input.Email" class="form-control" value="@Model.User.Email" />
         <span asp-validation-for="Input.Email" class="text-danger"></span>
     </div>
     <div class="form-group">
         <label asp-for="Input.Age"></label>
-        <input asp-for="Input.Age" class="form-control" />
+        <input asp-for="Input.Age" class="form-control" value="@Model.User.Age" />
         <span asp-validation-for="Input.Age" class="text-danger"></span>
     </div>
     <div class="form-group">
         <label asp-for="Input.Position"></label>
-        <input asp-for="Input.Position" class="form-control" />
+        <input asp-for="Input.Position" class="form-control" value="@Model.User.Position" />
         <span asp-validation-for="Input.Position" class="text-danger"></span>
     </div>
     <div class="form-group">
         <label asp-for="Input.Salary"></label>
-        <input asp-for="Input.Salary" class="form-control" />
+        <input asp-for="Input.Salary" class="form-control" value="@Model.User.Salary" />
         <span asp-validation-for="Input.Salary" class="text-danger"></span>
     </div>
     <div>
         <label asp-for="Input.DepartmentId"></label>
         <select asp-for="Input.DepartmentId" class="form-control">
-            <option value="">Select Department</option>
+    <option value="">Select Department</option>
+
+            <option value="0">-- All Departments --</option>
             @foreach (var department in Model.Departments)
             {
-                <option value="@department.DepartmentId">@department.Name</option>
+                if (department.DepartmentId != Model.User.DepartmentId)
+                {
+                    <option value="@department.DepartmentId">@department.Name</option>
+                }
             }
+            @if (Model.User.DepartmentId != null)
+            {
+                <option value="@Model.User.DepartmentId" selected>@Model.Departments.FirstOrDefault(s => s.DepartmentId == Model.User.DepartmentId)?.Name</option>
+            }
+
         </select>
         <span asp-validation-for="Input.DepartmentId" class="text-danger"></span>
+
+
     </div>
     <button type="submit" class="btn btn-primary">Register</button>
 </form>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}

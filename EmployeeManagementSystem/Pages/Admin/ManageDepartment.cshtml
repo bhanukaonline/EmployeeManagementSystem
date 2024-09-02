@@ -1,0 +1,68 @@
+﻿@page
+@model EmployeeManagementSystem.Pages.Admin.ManageDepartmentModel
+@{
+}
+<a class="btn btn-outline-dark" href="/admin/dashboard">Dashboard</a>
+<h1>Manage Departments</h1>
+
+<!-- Create / Edit Form -->
+<form method="post">
+    @if (Model.IsEditMode)
+    {
+        <h2>Edit Department</h2>
+        <input type="hidden" asp-for="Department.DepartmentId" />
+    }
+    else
+    {
+        <h2>Create Department</h2>
+    }
+
+    <div class="form-group">
+        <label asp-for="Department.Name"></label>
+        <input asp-for="Department.Name" class="form-control" />
+    </div>
+    <div class="form-group mb-3">
+        <label asp-for="Department.ManagerId"></label>
+        <input asp-for="Department.ManagerId" class="form-control" />
+    </div>
+
+    @if (Model.IsEditMode)
+    {
+        <button type="submit" formaction="@Url.Page("/Admin/ManageDepartment", "Update")" class="btn btn-primary">Update</button>
+        <button type="submit" formaction="@Url.Page("/Admin/ManageDepartment", "Cancel")" class="btn btn-secondary">Cancel</button>
+    }
+    else
+    {
+        <button type="submit" formaction="@Url.Page("/Admin/ManageDepartment", "Create")" class="btn btn-primary">Create</button>
+    }
+</form>
+
+<!-- Department List -->
+<h2>Departments</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>ManagerId</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Departments != null)
+        {
+            @foreach (var department in Model.Departments)
+            {
+                <tr>
+                    <td>@department.Name</td>
+                    <td>@department.ManagerId</td>
+                    <td>
+                        <form method="post">
+                            <button type="submit" formaction="@Url.Page("/Admin/ManageDepartment", "Edit", new { id = department.DepartmentId })" class="btn btn-warning">Edit</button>
+                            <button type="submit" formaction="@Url.Page("/Admin/ManageDepartment", "Delete", new { id = department.DepartmentId })" class="btn btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>

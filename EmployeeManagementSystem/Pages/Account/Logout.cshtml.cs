@@ -8,15 +8,12 @@ namespace EmployeeManagementSystem.Pages.Account
 {
     public class LogoutModel : PageModel
     {
-        public void OnGet()
-        {
-            // Optionally, display confirmation
-        }
-
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnGetAsync()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToPage("/Index");
         }
+
+        
     }
 }
