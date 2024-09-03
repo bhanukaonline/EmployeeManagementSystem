@@ -6,21 +6,22 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace EmployeeManagementSystem.Pages.Manager
+namespace EmployeeManagementSystem.Pages.Employee
 {
-    public class ManageEmployeeModel : PageModel
+    public class EmployeeModel : PageModel
     {
         private readonly IUserService _userService;
         private static readonly string SecretKey = Environment.GetEnvironmentVariable("HMAC_SECRET_KEY");
 
 
-        public ManageEmployeeModel(IUserService userService)
+        public EmployeeModel(IUserService userService)
         {
             _userService = userService;
+
         }
-        public IEnumerable<User> Employees { get; set; }
-        public int id { get; set; }
+        public User User { get; set; }
         public int LoggedInUserId { get; set; }
+
         public async Task OnGetAsync()
         {
             var sessionId = HttpContext.Request.Cookies["SessionId"];
@@ -28,18 +29,14 @@ namespace EmployeeManagementSystem.Pages.Manager
 
             if (sessionId != null && sessionHmac != null && VerifyHmac(sessionId, sessionHmac))
             {
-                LoggedInUserId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
-                Employees = await _userService.GetEmployeesInDepartment(LoggedInUserId);
+                LoggedInUserId = Convert.ToInt32(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                User = await _userService.GetUserByIdAsync(LoggedInUserId);
+
             }
             else
             {
                 RedirectToPage("/Account/Login");
             }
-        }
-        public async Task<IActionResult> OnPostDeleteAsync(int id)
-        {
-            await _userService.DeleteUserAsync(id);
-            return RedirectToPage();
         }
         private bool VerifyHmac(string data, string hmac)
         {

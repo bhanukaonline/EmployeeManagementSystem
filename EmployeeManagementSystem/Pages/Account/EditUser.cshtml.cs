@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace EmployeeManagementSystem.Pages.Account
 {
@@ -14,6 +16,8 @@ namespace EmployeeManagementSystem.Pages.Account
     {
         private readonly IUserService _userService;
         private readonly IDepartmentService _departmentService;
+        private static readonly string SecretKey = Environment.GetEnvironmentVariable("HMAC_SECRET_KEY");
+
 
         public EditUserModel(IUserService userService, IDepartmentService departmentService)
         {
@@ -47,9 +51,9 @@ namespace EmployeeManagementSystem.Pages.Account
             public string Phone { get; set; }
             [Required]
             public string Email { get; set; }
-            public int Age { get; set; }
+            public string Age { get; set; }
             public string Position { get; set; }
-            public int Salary { get; set; }
+            public string Salary { get; set; }
             [Required]
             public int DepartmentId { get; set; }
 
@@ -64,10 +68,20 @@ namespace EmployeeManagementSystem.Pages.Account
         public IEnumerable<Department> Departments { get; set; }
         public async Task  OnGetAsync()
         {
-            Departments = await _departmentService.GetAllDepartmentsAsync();
+            var sessionId = HttpContext.Request.Cookies["SessionId"];
+            var sessionHmac = HttpContext.Request.Cookies["SessionHmac"];
 
-            User = await _userService.GetUserByIdAsync(Id);
-            LoggedInUserRole = HttpContext.User.FindFirstValue(ClaimTypes.Role);
+            if (sessionId != null && sessionHmac != null && VerifyHmac(sessionId, sessionHmac))
+            {
+                Departments = await _departmentService.GetAllDepartmentsAsync();
+
+                User = await _userService.GetUserByIdAsync(Id);
+                LoggedInUserRole = HttpContext.User.FindFirstValue(ClaimTypes.Role);
+            }
+            else
+            {
+                RedirectToPage("/Account/Login");
+            }
 
 
         }
@@ -114,6 +128,19 @@ namespace EmployeeManagementSystem.Pages.Account
             // Optionally, redirect to login page after successful registration
 
 
+        }
+        private bool VerifyHmac(string data, string hmac)
+        {
+            var computedHmac = GenerateHmac(data);
+            return hmac == computedHmac;
+        }
+        private string GenerateHmac(string data)
+        {
+            using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(SecretKey)))
+            {
+                var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
+                return Convert.ToBase64String(hash);
+            }
         }
     }
 }

@@ -3,14 +3,19 @@ using EmployeeManagementSystem.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace EmployeeManagementSystem.Pages.Admin
 {
     [Authorize(Policy = "AdminOnly")]
 
+
     public class ManageDepartmentModel : PageModel
     {
         private readonly IDepartmentService _departmentService;
+        private static readonly string SecretKey = Environment.GetEnvironmentVariable("HMAC_SECRET_KEY");
+
         public ManageDepartmentModel (IDepartmentService departmentService)
         {
             _departmentService = departmentService;
@@ -25,7 +30,17 @@ namespace EmployeeManagementSystem.Pages.Admin
 
         public async Task OnGetAsync()
         {
-            Departments = await _departmentService.GetAllDepartmentsAsync();
+            var sessionId = HttpContext.Request.Cookies["SessionId"];
+            var sessionHmac = HttpContext.Request.Cookies["SessionHmac"];
+
+            if (sessionId != null && sessionHmac != null && VerifyHmac(sessionId, sessionHmac))
+            {
+                Departments = await _departmentService.GetAllDepartmentsAsync();
+            }
+            else
+            {
+                RedirectToPage("/Account/Login");
+            }
         }
 
         public async Task<IActionResult> OnPostCreateAsync()
@@ -68,6 +83,19 @@ namespace EmployeeManagementSystem.Pages.Admin
         public async Task<IActionResult> OnPostCancelAsync(int id)
         {
             return RedirectToPage();
+        }
+        private bool VerifyHmac(string data, string hmac)
+        {
+            var computedHmac = GenerateHmac(data);
+            return hmac == computedHmac;
+        }
+        private string GenerateHmac(string data)
+        {
+            using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(SecretKey)))
+            {
+                var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
+                return Convert.ToBase64String(hash);
+            }
         }
     }
 }

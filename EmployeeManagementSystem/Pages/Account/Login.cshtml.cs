@@ -14,15 +14,20 @@ namespace EmployeeManagementSystem.Pages.Account
     public class LoginModel : PageModel
     {
         private readonly IUserService _userService;
-        private const string SecretKey = "YourSecretKey";
+        private readonly IEmailService _emailService; // Add email service
+        private static readonly string SecretKey = Environment.GetEnvironmentVariable("HMAC_SECRET_KEY");
 
-        public LoginModel(IUserService userService)
+        public LoginModel(IUserService userService, IEmailService emailService)
         {
             _userService = userService;
+            _emailService = emailService;
         }
 
         [BindProperty]
         public LoginInputModel Input { get; set; }
+
+        [BindProperty]
+        public string OTP { get; set; } // Add OTP property
 
         public string ErrorMessage { get; set; }
 
@@ -45,8 +50,8 @@ namespace EmployeeManagementSystem.Pages.Account
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid)
-                return Page();
+            //if (!ModelState.IsValid)
+            //    return Page();
 
             var user = await _userService.AuthenticateUserAsync(Input.Username, Input.Password);
             if (user == null)
@@ -55,52 +60,23 @@ namespace EmployeeManagementSystem.Pages.Account
                 return Page();
             }
 
-            // Create the user claims
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, user.Role),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
-            };
+            // Generate and send OTP
+            var otp = GenerateOtp();
+            await _emailService.SendEmailAsync(user.Email, "Your OTP Code", $"Your OTP code is {otp}");
 
-            var claimsIdentity = new ClaimsIdentity(
-                claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            // Store OTP in TempData (or use a more secure method)
+            TempData["OTP"] = otp;
+            TempData["UserId"] = user.Id;
 
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = Input.RememberMe,
-                // ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30) // Optional
-            };
-            var sessionId = user.Id.ToString();
-            var hmac = GenerateHmac(sessionId);
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
-                authProperties);
-
-
-            // Redirect to different pages based on the user's role
-            if (user.Role == "Admin")
-            {
-                return RedirectToPage("/Admin/Dashboard");
-            }
-            else if (user.Role == "Manager")
-            {
-                return RedirectToPage("/Manager/ManageEmployee");
-            }
-            else
-            {
-                return RedirectToPage("/Index");
-            }
+            // Redirect to OTP verification page
+            return RedirectToPage("/Account/VerifyOtp");
         }
-        private string GenerateHmac(string data)
+
+        private string GenerateOtp()
         {
-            using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(SecretKey)))
-            {
-                var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
-                return Convert.ToBase64String(hash);
-            }
+            var random = new Random();
+            return random.Next(100000, 999999).ToString();
         }
     }
+
 }

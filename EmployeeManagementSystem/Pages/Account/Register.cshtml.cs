@@ -4,16 +4,20 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace EmployeeManagementSystem.Pages.Account
 {
-    [Authorize(Policy = "AdminOnly")]
+    //[Authorize(Policy = "AdminOnly")]
 
     public class RegisterModel : PageModel
     {
         private readonly IUserService _userService;
         private readonly IDepartmentService _departmentService;
+        private static readonly string SecretKey = Environment.GetEnvironmentVariable("HMAC_SECRET_KEY");
+
 
         public RegisterModel(IUserService userService, IDepartmentService departmentService)
         {
@@ -48,9 +52,9 @@ namespace EmployeeManagementSystem.Pages.Account
             public string Phone { get; set; }
             [Required]
             public string Email { get; set; }
-            public int Age { get; set; }
+            public string Age { get; set; }
             public string Position { get; set; }
-            public int Salary { get; set; }
+            public string Salary { get; set; }
             [Required]
             public int DepartmentId { get; set; }
             
@@ -61,7 +65,17 @@ namespace EmployeeManagementSystem.Pages.Account
 
         public async Task OnGetAsync()
         {
-            Departments= await _departmentService.GetAllDepartmentsAsync();
+            var sessionId = HttpContext.Request.Cookies["SessionId"];
+            var sessionHmac = HttpContext.Request.Cookies["SessionHmac"];
+
+            if (sessionId != null && sessionHmac != null && VerifyHmac(sessionId, sessionHmac))
+            {
+                Departments = await _departmentService.GetAllDepartmentsAsync();
+            }
+            else
+            {
+                RedirectToPage("/Account/Login");
+            }
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -92,6 +106,19 @@ namespace EmployeeManagementSystem.Pages.Account
 
             // Optionally, redirect to login page after successful registration
             return RedirectToPage("/Account/Login");
+        }
+        private bool VerifyHmac(string data, string hmac)
+        {
+            var computedHmac = GenerateHmac(data);
+            return hmac == computedHmac;
+        }
+        private string GenerateHmac(string data)
+        {
+            using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(SecretKey)))
+            {
+                var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
+                return Convert.ToBase64String(hash);
+            }
         }
     }
 }

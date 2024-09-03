@@ -29,50 +29,120 @@ namespace EmployeeManagementSystem.Services
         public async Task<bool> RegisterUserAsync(User user, string password)
         {
             // Check if username already exists
-            var sqlCheck = "SELECT COUNT(1) FROM Users WHERE Username = @Username";
+            var sql = "SELECT * FROM Users";
             using var connection = _dbContext.CreateConnection();
-            var existingUser = await connection.ExecuteScalarAsync<int>(sqlCheck, new { user.Username });
-            if (existingUser > 0)
+            var users = await connection.QueryAsync<User>(sql);
+            foreach (var user1 in users)
             {
-                return false; // Username already exists
+                // Decrypt sensitive fields
+                user1.Username = EncryptionHelper.Decrypt(user1.Username);
+                if(user1.Username == user.Username)
+                {
+                    return false;
+                }
             }
+           
 
             // Hash the password
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
             user.PasswordHash = passwordHash;
 
+            // Encrypt sensitive fields
+            user.Username = EncryptionHelper.Encrypt(user.Username);
+            user.Address = EncryptionHelper.Encrypt(user.Address);
+            user.Phone = EncryptionHelper.Encrypt(user.Phone);
+            user.Email = EncryptionHelper.Encrypt(user.Email);
+            user.Age = EncryptionHelper.Encrypt(user.Age);
+            user.Position = EncryptionHelper.Encrypt(user.Position);
+            user.Salary = EncryptionHelper.Encrypt(user.Salary);
+
             // Insert the user into the database
-            var sqlInsert = "INSERT INTO Users (Username, PasswordHash, Role , Address, Phone , Email, Age, Position, Salary, DepartmentId) VALUES (@Username, @PasswordHash, @Role ,@Address, @Phone , @Email, @Age, @Position, @Salary, @DepartmentId)";
+            var sqlInsert = "INSERT INTO Users (Username, PasswordHash, Role, Address, Phone, Email, Age, Position, Salary, DepartmentId) VALUES (@Username, @PasswordHash, @Role, @Address, @Phone, @Email, @Age, @Position, @Salary, @DepartmentId)";
             var result = await connection.ExecuteAsync(sqlInsert, user);
             return result > 0;
         }
 
         public async Task<User> AuthenticateUserAsync(string username, string password)
         {
-            var sql = "SELECT * FROM Users WHERE Username = @Username";
+            var sql = "SELECT * FROM Users";
             using var connection = _dbContext.CreateConnection();
-            var user = await connection.QuerySingleOrDefaultAsync<User>(sql, new { Username = username });
-            if (user == null)
-                return null;
+            var users = await connection.QueryAsync<User>(sql);
+            foreach (var user in users)
+            {
+                // Decrypt sensitive fields
+                user.Username = EncryptionHelper.Decrypt(user.Username);
+                user.Email = EncryptionHelper.Decrypt(user.Email);
 
-            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
-            if (!isPasswordValid)
-                return null;
+                if (user.Username== username)
+                {
+                    bool isPasswordValid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+                    if (isPasswordValid)
+                    {
+                        return user;
+                    }
+                    //else
+                    //{
+                    //    return null;
+                    //}
+                }
+                //else
+                //{
+                //    return null;
+                //}
 
-            return user;
+            }
+
+            //if (user == null)
+            //    return null;
+
+            //bool isPasswordValid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+            //if (!isPasswordValid)
+            //    return null;
+
+            // Decrypt sensitive fields
+            
+
+            return null;
         }
+
         public async Task<IEnumerable<User>> GetAllUsersAsync()
         {
             var sql = "SELECT * FROM Users";
             using var connection = _dbContext.CreateConnection();
-            return await connection.QueryAsync<User>(sql);
+            var users = await connection.QueryAsync<User>(sql);
+            foreach (var user in users)
+            {
+                // Decrypt sensitive fields
+                user.Username = EncryptionHelper.Decrypt(user.Username);
+                user.Address = EncryptionHelper.Decrypt(user.Address);
+                user.Phone = EncryptionHelper.Decrypt(user.Phone);
+                user.Email = EncryptionHelper.Decrypt(user.Email);
+                user.Age = EncryptionHelper.Decrypt(user.Age);
+                user.Position = EncryptionHelper.Decrypt(user.Position);
+                user.Salary = EncryptionHelper.Decrypt(user.Salary);
+            }
+            return users;
         }
+
         public async Task<User> GetUserByIdAsync(int userId)
         {
             var sql = "SELECT * FROM Users WHERE Id = @UserId";
             using var connection = _dbContext.CreateConnection();
-            return await connection.QueryFirstOrDefaultAsync<User>(sql, new { UserId = userId });
+            var user = await connection.QueryFirstOrDefaultAsync<User>(sql, new { UserId = userId });
+            if (user != null)
+            {
+                // Decrypt sensitive fields
+                user.Username = EncryptionHelper.Decrypt(user.Username);
+                user.Address = EncryptionHelper.Decrypt(user.Address);
+                user.Phone = EncryptionHelper.Decrypt(user.Phone);
+                user.Email = EncryptionHelper.Decrypt(user.Email);
+                user.Age = EncryptionHelper.Decrypt(user.Age);
+                user.Position = EncryptionHelper.Decrypt(user.Position);
+                user.Salary = EncryptionHelper.Decrypt(user.Salary);
+            }
+            return user;
         }
+
         public async Task<IActionResult> DeleteUserAsync(int userId)
         {
             var sql = "DELETE FROM Users WHERE Id = @UserId";
@@ -80,21 +150,35 @@ namespace EmployeeManagementSystem.Services
             await connection.ExecuteAsync(sql, new { UserId = userId });
             return new OkResult();
         }
+
         public async Task<IEnumerable<User>> GetEmployeesInDepartment(int id)
         {
             var sql = @"
-                        SELECT u.* 
-                        FROM Users u
-                        INNER JOIN Department d ON u.DepartmentId = d.DepartmentId
-                        WHERE d.ManagerId = @Id";
+                    SELECT u.* 
+                    FROM Users u
+                    INNER JOIN Department d ON u.DepartmentId = d.DepartmentId
+                    WHERE d.ManagerId = @Id";
             using var connection = _dbContext.CreateConnection();
-            return await connection.QueryAsync<User>(sql, new { Id = id });
-        }
-        public async Task EditUser(User User)
-        {
-            if (User == null)
+            var users = await connection.QueryAsync<User>(sql, new { Id = id });
+            foreach (var user in users)
             {
-                throw new ArgumentNullException(nameof(User), "User parameter cannot be null");
+                // Decrypt sensitive fields
+                user.Username = EncryptionHelper.Decrypt(user.Username);
+                user.Address = EncryptionHelper.Decrypt(user.Address);
+                user.Phone = EncryptionHelper.Decrypt(user.Phone);
+                user.Email = EncryptionHelper.Decrypt(user.Email);
+                user.Age = EncryptionHelper.Decrypt(user.Age);
+                user.Position = EncryptionHelper.Decrypt(user.Position);
+                user.Salary = EncryptionHelper.Decrypt(user.Salary);
+            }
+            return users;
+        }
+
+        public async Task EditUser(User user)
+        {
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user), "User parameter cannot be null");
             }
 
             if (_dbContext == null)
@@ -102,12 +186,20 @@ namespace EmployeeManagementSystem.Services
                 throw new InvalidOperationException("Database context is not initialized");
             }
 
+            // Encrypt sensitive fields
+            user.Username = EncryptionHelper.Encrypt(user.Username);
+            user.Address = EncryptionHelper.Encrypt(user.Address);
+            user.Phone = EncryptionHelper.Encrypt(user.Phone);
+            user.Email = EncryptionHelper.Encrypt(user.Email);
+            user.Age = EncryptionHelper.Encrypt(user.Age);
+            user.Position = EncryptionHelper.Encrypt(user.Position);
+            user.Salary = EncryptionHelper.Encrypt(user.Salary);
+
             var sql = "UPDATE Users SET Username = @Username, Role = @Role, Address = @Address, Phone = @Phone, Email = @Email, Age = @Age, Position = @Position, Salary = @Salary, DepartmentId = @DepartmentId WHERE Id = @Id";
             using var connection = _dbContext.CreateConnection();
-            await connection.ExecuteAsync(sql, User);
+            await connection.ExecuteAsync(sql, user);
         }
-
-
     }
-    
+
+
 }

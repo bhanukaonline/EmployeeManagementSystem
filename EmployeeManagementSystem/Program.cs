@@ -38,6 +38,7 @@ builder.Services.AddRazorPages(options =>
 builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 

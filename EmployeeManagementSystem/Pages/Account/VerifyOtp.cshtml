@@ -1,0 +1,16 @@
+﻿@page
+@model EmployeeManagementSystem.Pages.Account.VerifyOtpModel
+@{
+    ViewData["Title"] = "Verify OTP";
+}
+
+<h2>Verify OTP</h2>
+
+<form method="post">
+    <div class="form-group">
+        <label asp-for="OTP"></label>
+        <input asp-for="OTP" class="form-control" />
+        <span asp-validation-for="OTP" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Verify</button>
+</form>

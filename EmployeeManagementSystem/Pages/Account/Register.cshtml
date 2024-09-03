@@ -66,9 +66,11 @@
         <label asp-for="Input.DepartmentId"></label>
         <select asp-for="Input.DepartmentId" class="form-control">
             <option value="">Select Department</option>
+            @if(Model.Departments != null){
             @foreach (var department in Model.Departments)
             {
                 <option value="@department.DepartmentId">@department.Name</option>
+            }
             }
         </select>
         <span asp-validation-for="Input.DepartmentId" class="text-danger"></span>
