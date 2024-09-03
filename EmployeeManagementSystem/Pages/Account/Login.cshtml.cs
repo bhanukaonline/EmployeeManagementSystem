@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace EmployeeManagementSystem.Pages.Account
@@ -12,6 +14,7 @@ namespace EmployeeManagementSystem.Pages.Account
     public class LoginModel : PageModel
     {
         private readonly IUserService _userService;
+        private const string SecretKey = "YourSecretKey";
 
         public LoginModel(IUserService userService)
         {
@@ -56,7 +59,8 @@ namespace EmployeeManagementSystem.Pages.Account
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Role, user.Role),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
 
             var claimsIdentity = new ClaimsIdentity(
@@ -67,11 +71,14 @@ namespace EmployeeManagementSystem.Pages.Account
                 IsPersistent = Input.RememberMe,
                 // ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30) // Optional
             };
+            var sessionId = user.Id.ToString();
+            var hmac = GenerateHmac(sessionId);
 
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(claimsIdentity),
                 authProperties);
+
 
             // Redirect to different pages based on the user's role
             if (user.Role == "Admin")
@@ -80,11 +87,19 @@ namespace EmployeeManagementSystem.Pages.Account
             }
             else if (user.Role == "Manager")
             {
-                return RedirectToPage("/Manager/ManageDepartment");
+                return RedirectToPage("/Manager/ManageEmployee");
             }
             else
             {
                 return RedirectToPage("/Index");
+            }
+        }
+        private string GenerateHmac(string data)
+        {
+            using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(SecretKey)))
+            {
+                var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
+                return Convert.ToBase64String(hash);
             }
         }
     }

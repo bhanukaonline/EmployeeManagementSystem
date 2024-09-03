@@ -2,10 +2,21 @@
 using BCrypt.Net;
 using Dapper;
 using EmployeeManagementSystem.Models;
+using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
 namespace EmployeeManagementSystem.Services
 {
+    public interface IUserService
+    {
+        Task<bool> RegisterUserAsync(User user, string password);
+        Task<User> AuthenticateUserAsync(string username, string password);
+        Task<IEnumerable<User>> GetAllUsersAsync();
+        Task<User> GetUserByIdAsync(int userId);
+        Task<IActionResult> DeleteUserAsync(int userId);
+        Task<IEnumerable<User>> GetEmployeesInDepartment(int id);
+        Task EditUser(User User);
+     }
     public class UserService : IUserService
     {
         private readonly DapperDbContext _dbContext;
@@ -62,5 +73,41 @@ namespace EmployeeManagementSystem.Services
             using var connection = _dbContext.CreateConnection();
             return await connection.QueryFirstOrDefaultAsync<User>(sql, new { UserId = userId });
         }
+        public async Task<IActionResult> DeleteUserAsync(int userId)
+        {
+            var sql = "DELETE FROM Users WHERE Id = @UserId";
+            using var connection = _dbContext.CreateConnection();
+            await connection.ExecuteAsync(sql, new { UserId = userId });
+            return new OkResult();
+        }
+        public async Task<IEnumerable<User>> GetEmployeesInDepartment(int id)
+        {
+            var sql = @"
+                        SELECT u.* 
+                        FROM Users u
+                        INNER JOIN Department d ON u.DepartmentId = d.DepartmentId
+                        WHERE d.ManagerId = @Id";
+            using var connection = _dbContext.CreateConnection();
+            return await connection.QueryAsync<User>(sql, new { Id = id });
+        }
+        public async Task EditUser(User User)
+        {
+            if (User == null)
+            {
+                throw new ArgumentNullException(nameof(User), "User parameter cannot be null");
+            }
+
+            if (_dbContext == null)
+            {
+                throw new InvalidOperationException("Database context is not initialized");
+            }
+
+            var sql = "UPDATE Users SET Username = @Username, Role = @Role, Address = @Address, Phone = @Phone, Email = @Email, Age = @Age, Position = @Position, Salary = @Salary, DepartmentId = @DepartmentId WHERE Id = @Id";
+            using var connection = _dbContext.CreateConnection();
+            await connection.ExecuteAsync(sql, User);
+        }
+
+
     }
+    
 }
