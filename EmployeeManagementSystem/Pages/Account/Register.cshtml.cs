@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace EmployeeManagementSystem.Pages.Account
 {
-    //[Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "AdminOnly")]
 
     public class RegisterModel : PageModel
     {

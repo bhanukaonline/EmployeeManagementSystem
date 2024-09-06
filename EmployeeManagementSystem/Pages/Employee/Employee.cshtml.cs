@@ -1,5 +1,6 @@
 using EmployeeManagementSystem.Models;
 using EmployeeManagementSystem.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
@@ -8,6 +9,8 @@ using System.Text;
 
 namespace EmployeeManagementSystem.Pages.Employee
 {
+    [Authorize(Policy = "EmployeeOnly")]
+
     public class EmployeeModel : PageModel
     {
         private readonly IUserService _userService;
